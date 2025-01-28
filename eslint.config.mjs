@@ -1,26 +1,9 @@
-import globals from "globals";
-import js from "@eslint/js";
-import jest from "eslint-plugin-jest";
+import globals from 'globals';
+import pluginJs from '@eslint/js';
 
-/** @type {import('eslint').Linter.Config[]} */
 export default [
-  {
-    files: ["**/*.js"],
-    languageOptions: {
-      sourceType: "commonjs",
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-      },
-    },
-  },
-  js.configs.recommended,
-  {
-    plugins: {
-      jest,
-    },
-    rules: {
-      ...jest.configs.recommended.rules,
-    },
-  },
+  { files: ['**/*.js'], languageOptions: { sourceType: 'commonjs' } },
+  { languageOptions: { globals: globals.node } },
+  { languageOptions: { globals: globals.jest } },
+  pluginJs.configs.recommended,
 ];
