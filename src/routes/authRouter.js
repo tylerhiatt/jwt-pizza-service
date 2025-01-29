@@ -110,7 +110,6 @@ authRouter.put(
       return res.status(403).json({ message: 'unauthorized' });
     }
     
-    console.log('Update Parameters:', { userId, email, password });
     const updatedUser = await DB.updateUser(userId, email, password);
     res.json(updatedUser);
   })
