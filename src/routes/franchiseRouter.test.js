@@ -18,7 +18,7 @@ beforeAll(async () => {
     expectValidJwt(adminToken);
 });
 
-describe.only('Franchise Router Tests', () => {
+describe('Franchise Router Tests', () => {
     test('Create franchise as an admin', async () => {
         const franchiseData = {
             name: randomName() + 'Franchise',
@@ -70,6 +70,7 @@ describe.only('Franchise Router Tests', () => {
     test('Create store under a franchise', async () => {
         const franchiseId = await createTestFranchise();
         const storeId = await createTestStore(franchiseId);
+        console.log(storeId);
     });
 
     test('Delete a store under a franchise', async () => {
