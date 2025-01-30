@@ -143,6 +143,7 @@ describe('Franchise Router Tests', () => {
         // Mock the query method to throw an error when trying to delete a franchise
         jest.spyOn(DB, 'query').mockImplementationOnce(async (conn, sql, params) => {
             if (sql.includes('DELETE FROM franchise')) {
+                console.log(params);
                 throw new Error('Simulated DB failure');
             }
             return [];
