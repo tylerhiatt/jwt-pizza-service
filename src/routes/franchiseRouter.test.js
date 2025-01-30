@@ -86,16 +86,11 @@ describe('Franchise Router Tests', () => {
         expect(deleteRes.status).toBe(200);
         expect(deleteRes.body.message).toBe('store deleted');
     });    
-    
+
+    // cover failing paths for better branch coverage
     test('Fail to create a franchise as non-admin', async () => {
         const nonAdminUser = await createNonAdminUser();
-
-        const loginRes = await request(app).put('/api/auth').send({
-          email: nonAdminUser.email,
-          password: 'toomanysecrets',
-        });
-        const nonAdminToken = loginRes.body.token;
-        expectValidJwt(nonAdminToken);
+        const nonAdminToken = await loginTestUser(nonAdminUser);
       
         const franchiseData = { 
             name: randomName() + 'franchise', 
@@ -110,7 +105,70 @@ describe('Franchise Router Tests', () => {
         expect(res.status).toBe(403);
         expect(res.body.message).toBe('unable to create a franchise');
     });
-      
+
+    test('Fail to create a store as non-admin', async () => {
+        const franchiseId = await createTestFranchise();
+        
+        const nonAdminUser = await createNonAdminUser();
+        const nonAdminToken = await loginTestUser(nonAdminUser);
+    
+        const storeData = { name: 'Unauthorized Store' };
+        const storeRes = await request(app)
+            .post(`/api/franchise/${franchiseId}/store`)
+            .set('Authorization', `Bearer ${nonAdminToken}`)
+            .send(storeData);
+    
+        expect(storeRes.status).toBe(403);
+        expect(storeRes.body.message).toBe('unable to create a store');
+    });
+
+    test('Fail to delete a store as non-admin', async () => {
+        const franchiseId = await createTestFranchise();
+        const storeId = await createTestStore(franchiseId);
+    
+        const nonAdminUser = await createNonAdminUser();
+        const nonAdminToken = await loginTestUser(nonAdminUser);
+    
+        const deleteRes = await request(app)
+            .delete(`/api/franchise/${franchiseId}/store/${storeId}`)
+            .set('Authorization', `Bearer ${nonAdminToken}`);
+    
+        expect(deleteRes.status).toBe(403);
+        expect(deleteRes.body.message).toBe('unable to delete a store');
+    });
+
+    test('Fail to delete a franchise due to DB error', async () => {
+        const franchiseId = await createTestFranchise();
+    
+        // Mock the query method to throw an error when trying to delete a franchise
+        jest.spyOn(DB, 'query').mockImplementationOnce(async (conn, sql, params) => {
+            if (sql.includes('DELETE FROM franchise')) {
+                throw new Error('Simulated DB failure');
+            }
+            return [];
+        });
+    
+        const deleteRes = await request(app)
+            .delete(`/api/franchise/${franchiseId}`)
+            .set('Authorization', `Bearer ${adminToken}`);
+    
+        expect(deleteRes.status).toBe(500);
+    
+        // Restore DB query function after test
+        DB.query.mockRestore();
+    });
+
+    test('Return empty array if user has no franchises', async () => {
+        const nonFranchiseUser = await createNonAdminUser();
+        const nonFranchiseToken = await loginTestUser(nonFranchiseUser);
+    
+        const res = await request(app)
+            .get(`/api/franchise/${nonFranchiseUser.id}`)
+            .set('Authorization', `Bearer ${nonFranchiseToken}`);
+    
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual([]);
+    });
 });
 
 //// helper functions for unit tests ////
@@ -138,6 +196,18 @@ async function createNonAdminUser() {
     
     user = await DB.addUser(user);
     return { ...user, password: 'toomanysecrets' };
+}
+
+async function loginTestUser(user) {
+    const loginRes = await request(app).put('/api/auth').send({
+        email: user.email,
+        password: 'toomanysecrets',
+    });
+
+    const userToken = loginRes.body.token;
+    expectValidJwt(userToken);
+
+    return userToken;
 }
 
 async function createTestFranchise() {

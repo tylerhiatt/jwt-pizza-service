@@ -84,6 +84,33 @@ describe('Order Router Tests', () => {
         expect(res.body.message).toBe('unable to add menu item');
     });
 
+    test('Fail to fulfill order due to factory API error', async () => {
+        const franchiseId = await createTestFranchise();
+        const storeId = await createTestStore(franchiseId);
+        const menuItem = await createTestMenuItem();
+    
+        const orderData = {
+            franchiseId,
+            storeId,
+            items: [{ menuId: menuItem.id, description: menuItem.title, price: menuItem.price }],
+        };
+    
+        jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+            ok: false,  
+            json: jest.fn().mockResolvedValue({ reportUrl: 'http://mocked-failure-url.com' })
+        });
+    
+        const orderRes = await request(app)
+            .post('/api/order')
+            .set('Authorization', `Bearer ${adminUserToken}`)
+            .send(orderData);
+    
+        expect(orderRes.status).toBe(500);
+        expect(orderRes.body.message).toBe('Failed to fulfill order at factory');
+        expect(orderRes.body.reportPizzaCreationErrorToPizzaFactoryUrl).toBe('http://mocked-failure-url.com');
+    });
+    
+
 
 });
 
@@ -163,16 +190,7 @@ async function createTestMenuItem() {
 
 async function createTestOrder() {
     const franchiseId = await createTestFranchise();
-
-    const storeData = { name: 'Test Store' };
-    const storeRes = await request(app)
-        .post(`/api/franchise/${franchiseId}/store`)
-        .set('Authorization', `Bearer ${adminUserToken}`)
-        .send(storeData);
-
-    expect(storeRes.status).toBe(200);
-    const storeId = storeRes.body.id;
-
+    const storeId = await createTestStore(franchiseId);
     const menuItem = await createTestMenuItem();
 
     const orderData = {
@@ -188,4 +206,19 @@ async function createTestOrder() {
 
     expect(orderRes.status).toBe(200);
     return orderRes.body.order; 
+}
+
+async function createTestStore(franchiseId) {
+    const storeData = { 
+        name: randomName() + 'Store' 
+    };
+    const storeRes = await request(app)
+        .post(`/api/franchise/${franchiseId}/store`)
+        .set('Authorization', `Bearer ${adminUserToken}`)
+        .send(storeData);
+    
+    expect(storeRes.status).toBe(200);
+    expect(storeRes.body.name).toBe(storeData.name);
+
+    return storeRes.body.id;
 }

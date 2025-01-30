@@ -25,8 +25,6 @@ describe('Auth Router Tests', () => {
     expect(loginRes.body.user).toMatchObject(expectedUser);
   });
 
- 
-
   test('Register a new user', async () => {
     const newUser = { 
       name: 'New User', 
@@ -115,6 +113,18 @@ describe('Auth Router Tests', () => {
     expect(authCheckRes.status).toBe(401);
     expect(authCheckRes.body.message).toBe('unauthorized');
   });
+
+  test('Return 404 when user does not exist', async () => {
+    const res = await request(app)
+        .put('/api/auth') 
+        .send({
+            email: randomName() + '@test.com', // Non-existent user
+            password: 'randompassword'
+        });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe('unknown user');
+  }); 
 });
 
 
