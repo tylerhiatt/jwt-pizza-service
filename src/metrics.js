@@ -15,7 +15,7 @@ let metricsInterval; // storing ID so I can clear it in the tests to prevent fro
 // Middleware to track HTTP requests
 function requestTracker() {
   return (req, res, next) => {
-    console.log("Entered requestTracker");
+    // console.log("Entered requestTracker");
     const start = process.hrtime();
 
     res.on("finish", () => {
