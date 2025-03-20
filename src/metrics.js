@@ -8,7 +8,6 @@ const metrics_dict = {
   authAttempts: { success: 0, fail: 0 },
   system: { memoryPercentage: 0, cpuPercentage: 0 },
   pizzas: { sold: 0, creationFailures: 0, revenue: 0 },
-  //latency: { total: 0, count: 0 },
 };
 
 // Middleware to track HTTP requests
@@ -27,12 +26,9 @@ function requestTracker() {
         method: req.method,
       });
 
-      //   metrics_dict.latency.total += latencyMs;
-      //   metrics_dict.latency.count += 1;
-
-      console.log(
-        `Tracked HTTP request: ${req.method} ${req.originalUrl} (${latencyMs} ms)`
-      );
+      //   console.log(
+      //     `Tracked HTTP request: ${req.method} ${req.originalUrl} (${latencyMs} ms)`
+      //   );
     });
 
     next();
@@ -65,7 +61,7 @@ function trackPizzaOrder(success, count, revenue) {
 
 // Periodically send metrics to Grafana
 setInterval(() => {
-  console.log("SENDING METRICS TO GRAFANA...");
+  // console.log("SENDING METRICS TO GRAFANA...");
 
   // Send HTTP Request Counts
   Object.keys(metrics_dict.requestsByMethod).forEach((method) => {
@@ -115,13 +111,6 @@ setInterval(() => {
     metrics_dict.pizzas.creationFailures =
     metrics_dict.pizzas.revenue =
       0;
-
-  // Send Latency Metrics
-  //   if (metrics_dict.latency.count > 0) {
-  //     const avgLatency = metrics_dict.latency.total / metrics_dict.latency.count;
-  //     sendMetricToGrafana("request_latency_avg_ms", avgLatency);
-  //     metrics_dict.latency.total = metrics_dict.latency.count = 0; // Reset latency tracking
-  //   }
 }, 30000); // Send every 30 seconds
 
 // Function to send metrics to Grafana
@@ -171,17 +160,17 @@ function sendMetricToGrafana(metricName, metricValue, attributes = {}) {
       Authorization: `Bearer ${metrics.apiKey}`,
       "Content-Type": "application/json",
     },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        console.error(`Failed to push metric: ${metricName}`);
-      } else {
-        console.log(`PUSHED ${metricName}`);
-      }
-    })
-    .catch((error) => {
-      console.error(`ERROR pushing ${metricName}:`, error);
-    });
+  }).catch(() => {});
+  // .then((response) => {
+  //   if (!response.ok) {
+  //     //console.error(`Failed to push metric: ${metricName}`);
+  //   } else {
+  //     //console.log(`PUSHED ${metricName}`);
+  //   }
+  // })
+  // .catch((error) => {
+  //   //console.error(`ERROR pushing ${metricName}:`, error);
+  // });
 }
 
 module.exports = {
