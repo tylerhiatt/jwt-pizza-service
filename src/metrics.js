@@ -10,6 +10,8 @@ const metrics_dict = {
   pizzas: { sold: 0, creationFailures: 0, revenue: 0 },
 };
 
+let metricsInterval; // storing ID so I can clear it in the tests to prevent from running indefinitely
+
 // Middleware to track HTTP requests
 function requestTracker() {
   return (req, res, next) => {
@@ -59,59 +61,71 @@ function trackPizzaOrder(success, count, revenue) {
   }
 }
 
-// Periodically send metrics to Grafana
-setInterval(() => {
-  // console.log("SENDING METRICS TO GRAFANA...");
+function startMetricsCollection() {
+  if (!metricsInterval) {
+    // Periodically send metrics to Grafana
+    metricsInterval = setInterval(() => {
+      // console.log("SENDING METRICS TO GRAFANA...");
 
-  // Send HTTP Request Counts
-  Object.keys(metrics_dict.requestsByMethod).forEach((method) => {
-    sendMetricToGrafana(
-      "http_requests_total",
-      metrics_dict.requestsByMethod[method],
-      { method }
-    );
-    metrics_dict.requestsByMethod[method] = 0; // Reset after sending
-  });
+      // Send HTTP Request Counts
+      Object.keys(metrics_dict.requestsByMethod).forEach((method) => {
+        sendMetricToGrafana(
+          "http_requests_total",
+          metrics_dict.requestsByMethod[method],
+          { method }
+        );
+        metrics_dict.requestsByMethod[method] = 0; // Reset after sending
+      });
 
-  // Send Active Users
-  sendMetricToGrafana("active_users", metrics_dict.activeUsers);
+      // Send Active Users
+      sendMetricToGrafana("active_users", metrics_dict.activeUsers);
 
-  // Send Auth Attempts
-  Object.keys(metrics_dict.authAttempts).forEach((status) => {
-    sendMetricToGrafana(
-      "auth_attempts_total",
-      metrics_dict.authAttempts[status],
-      { status }
-    );
-    metrics_dict.authAttempts[status] = 0; // Reset each status count
-  });
+      // Send Auth Attempts
+      Object.keys(metrics_dict.authAttempts).forEach((status) => {
+        sendMetricToGrafana(
+          "auth_attempts_total",
+          metrics_dict.authAttempts[status],
+          { status }
+        );
+        metrics_dict.authAttempts[status] = 0; // Reset each status count
+      });
 
-  // Send System Metrics
-  metrics_dict.system.cpuPercentage =
-    (os.loadavg()[0] / os.cpus().length) * 100;
-  metrics_dict.system.memoryPercentage =
-    ((os.totalmem() - os.freemem()) / os.totalmem()) * 100;
-  sendMetricToGrafana("cpu_percentage", metrics_dict.system.cpuPercentage);
-  sendMetricToGrafana(
-    "memory_percentage",
-    metrics_dict.system.memoryPercentage
-  );
+      // Send System Metrics
+      metrics_dict.system.cpuPercentage =
+        (os.loadavg()[0] / os.cpus().length) * 100;
+      metrics_dict.system.memoryPercentage =
+        ((os.totalmem() - os.freemem()) / os.totalmem()) * 100;
+      sendMetricToGrafana("cpu_percentage", metrics_dict.system.cpuPercentage);
+      sendMetricToGrafana(
+        "memory_percentage",
+        metrics_dict.system.memoryPercentage
+      );
 
-  // Send Pizza Metrics
-  sendMetricToGrafana("pizza_sold_total", metrics_dict.pizzas.sold);
-  sendMetricToGrafana(
-    "pizza_creation_failures_total",
-    metrics_dict.pizzas.creationFailures
-  );
-  sendMetricToGrafana(
-    "revenue_total",
-    Math.round(metrics_dict.pizzas.revenue * 100)
-  ); // Convert to cents
-  metrics_dict.pizzas.sold =
-    metrics_dict.pizzas.creationFailures =
-    metrics_dict.pizzas.revenue =
-      0;
-}, 30000); // Send every 30 seconds
+      // Send Pizza Metrics
+      sendMetricToGrafana("pizza_sold_total", metrics_dict.pizzas.sold);
+      sendMetricToGrafana(
+        "pizza_creation_failures_total",
+        metrics_dict.pizzas.creationFailures
+      );
+      sendMetricToGrafana(
+        "revenue_total",
+        Math.round(metrics_dict.pizzas.revenue * 100)
+      ); // Convert to cents
+      metrics_dict.pizzas.sold =
+        metrics_dict.pizzas.creationFailures =
+        metrics_dict.pizzas.revenue =
+          0;
+    }, 30000); // Send every 30 seconds
+  }
+}
+
+function stopMetricsCollection() {
+  // needed for tests to run
+  if (metricsInterval) {
+    clearInterval(metricsInterval);
+    metricsInterval = null;
+  }
+}
 
 // Function to send metrics to Grafana
 function sendMetricToGrafana(metricName, metricValue, attributes = {}) {
@@ -179,4 +193,6 @@ module.exports = {
   trackUserLogout,
   trackPizzaOrder,
   sendMetricToGrafana,
+  startMetricsCollection,
+  stopMetricsCollection,
 };

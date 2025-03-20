@@ -1,6 +1,7 @@
 const request = require("supertest");
 const app = require("../service");
 const { Role, DB } = require("../database/database");
+const { stopMetricsCollection } = require("../metrics");
 
 let adminUser;
 let adminUserToken;
@@ -14,6 +15,10 @@ beforeAll(async () => {
     trackAuthAttempt: jest.fn(),
     trackPizzaOrder: jest.fn(),
   }));
+});
+
+afterAll(() => {
+  stopMetricsCollection();
 });
 
 describe("Order Router Tests", () => {
