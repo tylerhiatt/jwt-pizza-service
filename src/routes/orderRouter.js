@@ -143,7 +143,7 @@ orderRouter.post(
       const revenue = orderReq.items.reduce((sum, item) => sum + item.price, 0);
       metrics.trackPizzaOrder(true, orderReq.items.length, revenue);
 
-      metrics.sendMetricToGrafana("pizza_creation_latency_ms", latencyMs, {
+      metrics.sendMetricToGrafana("pizza_creation_latency_ms", latency, {
         method: "POST",
         endpoint: "/api/order",
       });

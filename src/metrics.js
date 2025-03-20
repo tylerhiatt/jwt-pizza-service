@@ -64,7 +64,7 @@ function trackPizzaOrder(success, count, revenue) {
 }
 
 // Periodically send metrics to Grafana
-const timer = setInterval(() => {
+setInterval(() => {
   console.log("SENDING METRICS TO GRAFANA...");
 
   // Send HTTP Request Counts
