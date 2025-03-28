@@ -175,16 +175,6 @@ function sendMetricToGrafana(metricName, metricValue, attributes = {}) {
       "Content-Type": "application/json",
     },
   }).catch(() => {});
-  // .then((response) => {
-  //   if (!response.ok) {
-  //     //console.error(`Failed to push metric: ${metricName}`);
-  //   } else {
-  //     //console.log(`PUSHED ${metricName}`);
-  //   }
-  // })
-  // .catch((error) => {
-  //   //console.error(`ERROR pushing ${metricName}:`, error);
-  // });
 }
 
 module.exports = {

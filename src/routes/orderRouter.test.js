@@ -15,6 +15,12 @@ beforeAll(async () => {
     trackAuthAttempt: jest.fn(),
     trackPizzaOrder: jest.fn(),
   }));
+
+  jest.mock("../logger", () => ({
+    httpLogger: jest.fn((req, res, next) => next()),
+    logFactoryRequest: jest.fn(),
+    logUnhandledError: jest.fn(),
+  }));
 });
 
 afterAll(() => {

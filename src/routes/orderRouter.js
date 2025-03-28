@@ -4,6 +4,7 @@ const { Role, DB } = require("../database/database.js");
 const { authRouter } = require("./authRouter.js");
 const { asyncHandler, StatusCodeError } = require("../endpointHelper.js");
 const metrics = require("../metrics");
+const logger = require("../logger.js");
 
 const orderRouter = express.Router();
 
@@ -136,6 +137,17 @@ orderRouter.post(
     });
 
     const j = await r.json();
+
+    logger.logFactoryRequest(
+      `${config.factory.url}/api/order`,
+      {
+        diner: { id: req.user.id, name: req.user.name, email: req.user.email },
+        order,
+      },
+      j,
+      r.ok
+    );
+
     const endTime = process.hrtime(startTime);
     const latency = Math.round(endTime[0] * 1000 + endTime[1] / 1e6); // Convert to ms and return int
 
