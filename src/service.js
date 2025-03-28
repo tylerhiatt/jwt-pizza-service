@@ -60,11 +60,17 @@ app.use("*", (req, res) => {
 //   next();
 // });
 
-app.use((err, req, res) => {
-  logger.logUnhandledError(err, { path: req.originalUrl, method: req.method });
+app.use((err, req, res, next) => {
+  logger.logUnhandledError(err, {
+    path: req.originalUrl,
+    method: req.method,
+    user: req.user?.id,
+  });
+
   res
     .status(err.statusCode ?? 500)
     .json({ message: err.message, stack: err.stack });
+  next();
 });
 
 module.exports = app;

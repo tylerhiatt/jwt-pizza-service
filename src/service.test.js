@@ -3,6 +3,16 @@ const app = require("./service.js");
 const version = require("./version.json");
 const { stopMetricsCollection } = require("./metrics.js");
 
+beforeAll(() => {
+  jest.mock("./metrics.js", () => ({
+    requestTracker: () => (req, res, next) => next(),
+    stopMetricsCollection: jest.fn(),
+    trackAuthAttempt: jest.fn(),
+    trackPizzaOrder: jest.fn(),
+    sendMetricToGrafana: jest.fn(),
+  }));
+});
+
 afterAll(() => {
   stopMetricsCollection();
 });
