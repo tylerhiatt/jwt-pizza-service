@@ -184,6 +184,18 @@ orderRouter.put(
   asyncHandler(async (req, res) => {
     if (req.user.isRole(Role.Admin)) {
       enableChaos = req.params.state === "true";
+
+      sendLogToGrafana({
+        // sending chaos logs to grafana
+        level: "info",
+        type: "chaos",
+        stream: { method: "PUT", endpoint: "/api/order/chaos" },
+        message: {
+          chaos: enableChaos,
+          action: "Chaos mode toggled",
+          userId: req.user.id,
+        },
+      });
     }
 
     res.json({ chaos: enableChaos });
@@ -192,6 +204,18 @@ orderRouter.put(
 
 orderRouter.post("/", (req, res, next) => {
   if (enableChaos && Math.random() < 0.5) {
+    sendLogToGrafana({
+      level: "error",
+      type: "chaos",
+      stream: { method: "POST", endpoint: "/api/order" },
+      message: {
+        chaos: true,
+        reason: "Simulated chaos monkey failure",
+        requestBody: req.body,
+        userId: req.user?.id,
+      },
+    });
+
     throw new StatusCodeError("Chaos monkey", 500);
   }
   next();
