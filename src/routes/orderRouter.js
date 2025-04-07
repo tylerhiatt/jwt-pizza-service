@@ -204,7 +204,7 @@ orderRouter.put(
 
 orderRouter.post("/", (req, res, next) => {
   if (enableChaos && Math.random() < 0.5) {
-    sendLogToGrafana({
+    logger.sendLogToGrafana({
       level: "error",
       type: "chaos",
       stream: { method: "POST", endpoint: "/api/order" },
