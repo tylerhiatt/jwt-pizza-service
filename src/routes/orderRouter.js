@@ -185,7 +185,7 @@ orderRouter.put(
     if (req.user.isRole(Role.Admin)) {
       enableChaos = req.params.state === "true";
 
-      sendLogToGrafana({
+      logger.sendLogToGrafana({
         // sending chaos logs to grafana
         level: "info",
         type: "chaos",
