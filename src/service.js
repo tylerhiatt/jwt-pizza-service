@@ -13,15 +13,14 @@ app.use(setAuthUser);
 app.use(metrics.requestTracker()); // track middleware before routes
 app.use(logger.httpLogger); // logging
 
-const allowedOrigins = [
-  "https://pizza.tylerhiattdev.click",
-  "https://pizza-service.tylerhiattdev.click",
-  "http://localhost:3000",
-];
+const allowedOrigins = ["https://pizza.tylerhiattdev.click"];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  if (origin && !allowedOrigins.includes(origin)) {
+    return res.status(403).json({ message: "CORS error: Origin not allowed" });
+  }
+  if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   //res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
