@@ -177,48 +177,48 @@ orderRouter.post(
 );
 
 // chaos endpoint
-let enableChaos = false;
-orderRouter.put(
-  "/chaos/:state",
-  authRouter.authenticateToken,
-  asyncHandler(async (req, res) => {
-    if (req.user.isRole(Role.Admin)) {
-      enableChaos = req.params.state === "true";
+// let enableChaos = false;
+// orderRouter.put(
+//   "/chaos/:state",
+//   authRouter.authenticateToken,
+//   asyncHandler(async (req, res) => {
+//     if (req.user.isRole(Role.Admin)) {
+//       enableChaos = req.params.state === "true";
 
-      logger.sendLogToGrafana({
-        // sending chaos logs to grafana
-        level: "info",
-        type: "chaos",
-        stream: { method: "PUT", endpoint: "/api/order/chaos" },
-        message: {
-          chaos: enableChaos,
-          action: "Chaos mode toggled",
-          userId: req.user.id,
-        },
-      });
-    }
+//       logger.sendLogToGrafana({
+//         // sending chaos logs to grafana
+//         level: "info",
+//         type: "chaos",
+//         stream: { method: "PUT", endpoint: "/api/order/chaos" },
+//         message: {
+//           chaos: enableChaos,
+//           action: "Chaos mode toggled",
+//           userId: req.user.id,
+//         },
+//       });
+//     }
 
-    res.json({ chaos: enableChaos });
-  })
-);
+//     res.json({ chaos: enableChaos });
+//   })
+// );
 
-orderRouter.post("/", (req, res, next) => {
-  if (enableChaos && Math.random() < 0.5) {
-    logger.sendLogToGrafana({
-      level: "error",
-      type: "chaos",
-      stream: { method: "POST", endpoint: "/api/order" },
-      message: {
-        chaos: true,
-        reason: "Simulated chaos monkey failure",
-        requestBody: req.body,
-        userId: req.user?.id,
-      },
-    });
+// orderRouter.post("/", (req, res, next) => {
+//   if (enableChaos && Math.random() < 0.5) {
+//     logger.sendLogToGrafana({
+//       level: "error",
+//       type: "chaos",
+//       stream: { method: "POST", endpoint: "/api/order" },
+//       message: {
+//         chaos: true,
+//         reason: "Simulated chaos monkey failure",
+//         requestBody: req.body,
+//         userId: req.user?.id,
+//       },
+//     });
 
-    throw new StatusCodeError("Chaos monkey", 500);
-  }
-  next();
-});
+//     throw new StatusCodeError("Chaos monkey", 500);
+//   }
+//   next();
+// });
 
 module.exports = orderRouter;

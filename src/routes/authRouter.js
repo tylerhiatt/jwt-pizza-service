@@ -4,6 +4,7 @@ const config = require("../config.js");
 const { asyncHandler } = require("../endpointHelper.js");
 const { DB, Role } = require("../database/database.js");
 const metrics = require("../metrics.js");
+const rateLimit = require("express-rate-limit");
 
 const authRouter = express.Router();
 
@@ -71,7 +72,12 @@ async function setAuthUser(req, res, next) {
         req.user.isRole = (role) =>
           !!req.user.roles.find((r) => r.role === role);
       }
-    } catch {
+    } catch (err) {
+      if (err.name == "TokenExpiredError") {
+        return res
+          .status(401)
+          .json({ message: "Session expired. Please log in again." });
+      }
       req.user = null;
     }
   }
@@ -82,7 +88,6 @@ async function setAuthUser(req, res, next) {
 authRouter.authenticateToken = (req, res, next) => {
   if (!req.user) {
     metrics.trackAuthAttempt(false); // send failed auth attempt
-    //console.log("DEBUG: sending failed auth attempt");
     return res.status(401).send({ message: "unauthorized" });
   }
   next();
@@ -109,9 +114,16 @@ authRouter.post(
   })
 );
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 10,
+  message: { message: "Too many login attempts, try again later" },
+});
+
 // login
 authRouter.put(
   "/",
+  loginLimiter,
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const user = await DB.getUser(email, password);
@@ -150,7 +162,7 @@ authRouter.put(
 );
 
 async function setAuth(user) {
-  const token = jwt.sign(user, config.jwtSecret);
+  const token = jwt.sign(user, config.jwtSecret, { expiresIn: "1h" });
   await DB.loginUser(user.id, token);
   return token;
 }

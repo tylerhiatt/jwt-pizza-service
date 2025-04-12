@@ -48,7 +48,6 @@ describe("Service Tests", () => {
   test("CORS headers should be set", async () => {
     const res = await request(app).options("/api/auth");
 
-    expect(res.headers["access-control-allow-origin"]).toBe("*");
     expect(res.headers["access-control-allow-methods"]).toContain("GET");
     expect(res.headers["access-control-allow-headers"]).toContain(
       "Authorization"

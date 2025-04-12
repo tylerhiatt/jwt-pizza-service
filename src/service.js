@@ -6,15 +6,26 @@ const version = require("./version.json");
 const config = require("./config.js");
 const metrics = require("./metrics.js");
 const logger = require("./logger.js");
+const helmet = require("helmet");
 
 const app = express();
 app.use(express.json());
 app.use(setAuthUser);
 app.use(metrics.requestTracker()); // track middleware before routes
 app.use(logger.httpLogger); // logging
+app.use(helmet); // HTTP header protection against common attacks
+
+const allowedOrigins = [
+  "https://pizza.tylerhiattdev.click",
+  "https://pizza-service.tylerhiattdev.click",
+];
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  //res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -51,14 +62,6 @@ app.use("*", (req, res) => {
     message: "unknown endpoint",
   });
 });
-
-// // Default error handler for all exceptions and errors.
-// app.use((err, req, res, next) => {
-//   res
-//     .status(err.statusCode ?? 500)
-//     .json({ message: err.message, stack: err.stack });
-//   next();
-// });
 
 app.use((err, req, res, next) => {
   logger.logUnhandledError(err, {
