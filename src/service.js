@@ -6,18 +6,17 @@ const version = require("./version.json");
 const config = require("./config.js");
 const metrics = require("./metrics.js");
 const logger = require("./logger.js");
-const helmet = require("helmet");
 
 const app = express();
 app.use(express.json());
 app.use(setAuthUser);
 app.use(metrics.requestTracker()); // track middleware before routes
 app.use(logger.httpLogger); // logging
-app.use(helmet); // HTTP header protection against common attacks
 
 const allowedOrigins = [
   "https://pizza.tylerhiattdev.click",
   "https://pizza-service.tylerhiattdev.click",
+  "http://localhost:3000",
 ];
 
 app.use((req, res, next) => {
